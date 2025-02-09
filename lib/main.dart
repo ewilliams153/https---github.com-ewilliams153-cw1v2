@@ -13,7 +13,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 121, 238, 156)),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 121, 238, 156)),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Image Toggle App'),
@@ -29,11 +30,36 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   var _toggle = true;
   var _display = 'img1';
-
   int _counter = 0;
+
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+      value:1.0,
+    );
+
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -41,20 +67,22 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _toggleImage() {
+  Future<void> _toggleImage() async {
+    await _animationController.reverse();
+
     setState(() {
       _toggle = !_toggle;
-      if (_toggle){
+      if (_toggle) {
         _display = 'img1';
-      }else{
-        _display = 'img2';
-      }
+      } else {
+        _display = 'img2';}
     });
+
+    _animationController.forward();
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -64,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-             const Text(
+            const Text(
               'You have pushed the counter button this many times:',
             ),
             Text(
@@ -74,24 +102,25 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text(
               'Profile Selector:',
             ),
-            Image.asset(
-              'assets/images/' + _display + '.png',
-              height: 400,
-              width: 400,
+            FadeTransition(
+              opacity: _animation,
+              child: Image.asset(
+                'assets/images/$_display.png',
+                height: 400,
+                width: 400,
+              ),
             ),
             ElevatedButton(
-              onPressed: (){
-                _toggleImage();
-              },
-              child: Text('Toggle Image'),
+              onPressed: _toggleImage,
+              child: const Text('Toggle Image'),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-      onPressed: _incrementCounter,
-      tooltip: 'Increment',
-      child: const Icon(Icons.add),
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
       ),
     );
   }
